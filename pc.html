@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Find info and details on PC games, filtered for all ages." />
+  <meta name="description" content="Find info and details on PC games." />
   <title>Gamez - PC Games</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
@@ -12,27 +12,17 @@
   </style>
 </head>
 <body class="min-h-screen">
-  <!-- Navbar -->
+
+  <!-- Navbar (unchanged) -->
   <nav class="bg-[#a62985] flex flex-wrap items-center justify-between px-4 py-3">
-    <div class="flex items-center space-x-2">
-      <img src="logo.png" alt="Logo" class="w-12 h-12 rounded-full" />
-      <a href="pc.html" class="bg-[#65114d] px-4 py-2 rounded text-white">PC</a>
-      <a href="switch.html" class="bg-[#65114d] px-4 py-2 rounded text-white">Switch</a>
-      <a href="wii.html" class="bg-[#65114d] px-4 py-2 rounded text-white">Wii</a>
-    </div>
-    <div class="flex items-center space-x-2">
-      <a href="index.html" class="bg-[#65114d] px-4 py-2 rounded text-white">Home</a>
-      <a href="#" class="bg-[#65114d] px-4 py-2 rounded text-white">Account</a>
-      <div class="relative">
-        <input id="searchInput" type="text" placeholder="Search games..." class="bg-[#65114d] placeholder-white text-white pl-3 pr-10 py-2 rounded focus:outline-none" />
-        <button id="searchBtn" class="absolute right-0 top-0 mt-2 mr-3 text-white">🔍</button>
-      </div>
-    </div>
+    <!-- ... your existing nav markup ... -->
   </nav>
 
   <!-- Filter Bar -->
   <div class="bg-[#65114d] w-full flex flex-wrap items-center justify-between px-4 py-3 mt-2 rounded">
     <div class="flex space-x-2">
+      <input id="searchInput" type="text" placeholder="Search games..." class="bg-[#a62985] placeholder-white text-white pl-3 py-2 rounded focus:outline-none" />
+      <button id="searchBtn" class="bg-yellow-600 text-white px-4 py-2 rounded">Search</button>
       <select id="sortSelect" class="bg-[#a62985] text-white px-4 py-2 rounded">
         <option value="name">Sort by Name</option>
         <option value="first_release_date">Sort by Date</option>
@@ -40,19 +30,19 @@
       <select id="filterSelect" class="bg-[#a62985] text-white px-4 py-2 rounded">
         <option value="">All Genres</option>
         <option value="Shooter">Shooter</option>
-        <option value="Platformer">Platformer</option>
+        <option value="Platform">Platformer</option>
       </select>
     </div>
-    <h2 class="text-white text-lg font-semibold">PC GAMES</h2>
+    <h2 class="text-white text-lg font-semibold text-center flex-grow">PC GAMES</h2>
   </div>
 
-  <!-- Game Cards -->
+  <!-- Game Cards Container -->
   <main id="gamesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4"></main>
 
   <!-- Modal -->
-  <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
     <div class="bg-[#a62985] rounded-lg p-6 w-11/12 max-w-2xl text-white relative">
-      <button onclick="modal.classList.add('hidden')" class="absolute top-2 right-4 text-white text-xl">✖</button>
+      <button onclick="modal.classList.add('hidden')" class="absolute top-2 right-4 text-xl">✖</button>
       <h3 id="modalTitle" class="text-2xl font-bold mb-2"></h3>
       <p id="modalDesc" class="mb-4 text-sm"></p>
       <div>
@@ -62,39 +52,36 @@
     </div>
   </div>
 
+  <!-- Entire script block -->
   <script>
-    // ————————————————————————————————————————————————
-    // 1) Point at your deployed CORS proxy + IGDB base
-    // ————————————————————————————————————————————————
-    const PROXY_BASE          = 'https://cors-anywhere-ikzo.onrender.com/https://api.igdb.com/v4';
+    // 1) YOUR PUBLIC PROXY (deployed on Render/Heroku/etc)
+    const PROXY_BASE = 'https://cors-anywhere-ikzo.onrender.com';
+
+    // 2) IGDB & Platform constants
     const IGDB_GAMES_URL      = `${PROXY_BASE}/games`;
     const IGDB_CHARACTERS_URL = `${PROXY_BASE}/characters`;
-    const PLATFORM_ID         = 6;                  // change to 130 for Switch, 5 for Wii
-    const CLIENT_ID           = '723piadscdye95ondoeeee21nn8hpp';
-    const AUTH_TOKEN          = 'Bearer 6zc75l3hdu9fnyqzs3xlsfm7udv2t4';
-  
-    // ————————————————————————————————————————————————
-    // 2) DOM references
-    // ————————————————————————————————————————————————
-    const searchInput   = document.getElementById('searchInput');
-    const searchBtn     = document.getElementById('searchBtn');
-    const sortSelect    = document.getElementById('sortSelect');
-    const filterSelect  = document.getElementById('filterSelect');
-    const gamesContainer= document.getElementById('gamesContainer');
-    const modal         = document.getElementById('modal');
-    const modalTitle    = document.getElementById('modalTitle');
-    const modalDesc     = document.getElementById('modalDesc');
-    const modalChars    = document.getElementById('modalCharacters');
-  
+    const PLATFORM_ID = 6; // PC
+    const CLIENT_ID   = '723piadscdye95ondoeeee21nn8hpp';
+    const AUTH_TOKEN  = 'Bearer 6zc75l3hdu9fnyqzs3xlsfm7udv2t4';
+
+    // 3) DOM refs
+    const searchInput    = document.getElementById('searchInput');
+    const searchBtn      = document.getElementById('searchBtn');
+    const sortSelect     = document.getElementById('sortSelect');
+    const filterSelect   = document.getElementById('filterSelect');
+    const gamesContainer = document.getElementById('gamesContainer');
+    const modal          = document.getElementById('modal');
+    const modalTitle     = document.getElementById('modalTitle');
+    const modalDesc      = document.getElementById('modalDesc');
+    const modalChars     = document.getElementById('modalCharacters');
+
     let gamesData = [];
-  
-    // ————————————————————————————————————————————————
-    // 3) Render game cards
-    // ————————————————————————————————————————————————
+
+    // 4) Render cards
     function renderGames(games) {
       gamesContainer.innerHTML = '';
       games.forEach(game => {
-        const coverUrl = game.cover
+        const cover = game.cover
           ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`
           : 'https://via.placeholder.com/300';
         const card = document.createElement('div');
@@ -102,110 +89,89 @@
         card.innerHTML = `
           <h3 class="text-white font-bold text-lg">${game.name}</h3>
           <div class="w-full h-56 flex items-center justify-center bg-black">
-            <img src="${coverUrl}" alt="${game.name}" class="max-h-full max-w-full object-contain" />
+            <img src="${cover}" alt="${game.name}" class="max-h-full max-w-full object-contain"/>
           </div>
-          <p class="text-white text-sm">${game.summary || 'No description available.'}</p>
-          <button onclick="showMore(${game.id})" class="bg-yellow-600 text-white px-4 py-2 rounded mt-2">
-            Learn More
-          </button>
+          <p class="text-white text-sm">${game.summary||'No description.'}</p>
+          <button onclick="showMore(${game.id})" class="bg-yellow-600 text-white px-4 py-2 rounded">Learn More</button>
         `;
         gamesContainer.appendChild(card);
       });
     }
-  
-    // ————————————————————————————————————————————————
-    // 4) Filter, sort & search
-    // ————————————————————————————————————————————————
+
+    // 5) Filter / Sort / Search
     function applyFilters() {
       let list = [...gamesData];
-      const genre = filterSelect.value;
-      if (genre) {
-        list = list.filter(g => g.genres_names.includes(genre));
-      }
       const q = searchInput.value.trim().toLowerCase();
-      if (q) {
-        list = list.filter(g => g.name.toLowerCase().includes(q));
+      if (q) list = list.filter(g => g.name.toLowerCase().includes(q));
+      const genre = filterSelect.value;
+      if (genre) list = list.filter(g => g.genres_names.includes(genre));
+      if (sortSelect.value === 'name') {
+        list.sort((a,b)=>a.name.localeCompare(b.name));
+      } else {
+        list.sort((a,b)=>b.first_release_date - a.first_release_date);
       }
-      const sortBy = sortSelect.value;
-      list.sort((a,b) => {
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        return b.first_release_date - a.first_release_date;
-      });
       renderGames(list);
     }
-  
-    // ————————————————————————————————————————————————
-    // 5) “Learn More” modal fetch
-    // ————————————————————————————————————————————————
-    function showMore(gameId) {
+
+    // 6) Show More modal
+    function showMore(id) {
       fetch(IGDB_CHARACTERS_URL, {
-        method: 'POST',
-        headers: {
-          'Accept':       'application/json',
-          'Content-Type': 'text/plain',
-          'Client-ID':    CLIENT_ID,
-          'Authorization': AUTH_TOKEN
+        method:'POST',
+        headers:{
+          'Accept':'application/json',
+          'Content-Type':'text/plain',
+          'Client-ID':CLIENT_ID,
+          'Authorization':AUTH_TOKEN
         },
-        body: `fields name,description,games; where games = ${gameId};`
+        body:`fields name,description,games; where games = ${id};`
       })
-      .then(r => r.json())
-      .then(chars => {
-        const g = gamesData.find(x => x.id === gameId) || {};
+      .then(r=>r.json()).then(chars=>{
+        const g=gamesData.find(x=>x.id===id)||{};
         modalTitle.textContent = g.name;
-        modalDesc.textContent  = g.summary || 'No further description.';
+        modalDesc.textContent  = g.summary||'No further description.';
         modalChars.innerHTML   = '';
-        if (Array.isArray(chars) && chars.length) {
-          chars.forEach(c => {
-            const li = document.createElement('li');
-            li.innerHTML = `<strong>${c.name}</strong>: ${c.description || 'No description.'}`;
+        if(chars.length){
+          chars.forEach(c=>{
+            const li=document.createElement('li');
+            li.innerHTML=`<strong>${c.name}</strong>: ${c.description||'No description.'}`;
             modalChars.appendChild(li);
           });
         } else {
-          modalChars.innerHTML = '<li>No characters available.</li>';
+          modalChars.innerHTML='<li>No characters available.</li>';
         }
         modal.classList.remove('hidden');
       })
-      .catch(err => console.error('Character fetch error:', err));
+      .catch(console.error);
     }
-  
-    // ————————————————————————————————————————————————
-    // 6) Initial games fetch
-    // ————————————————————————————————————————————————
-    (function fetchGames() {
-      const q = `
-        fields id,name,summary,cover.image_id,first_release_date,genres.name;
-        where platforms = (${PLATFORM_ID});
-        limit 50;
-      `;
+
+    // 7) Initial fetch
+    (()=>{
       fetch(IGDB_GAMES_URL, {
-        method: 'POST',
-        headers: {
-          'Accept':       'application/json',
-          'Content-Type': 'text/plain',
-          'Client-ID':    CLIENT_ID,
-          'Authorization': AUTH_TOKEN
+        method:'POST',
+        headers:{
+          'Accept':'application/json',
+          'Content-Type':'text/plain',
+          'Client-ID':CLIENT_ID,
+          'Authorization':AUTH_TOKEN
         },
-        body: q
+        body:`fields id,name,summary,cover.image_id,first_release_date,genres.name; where platforms=(${PLATFORM_ID}); limit 50;`
       })
-      .then(r => r.json())
-      .then(data => {
-        gamesData = (data.data || data).map(g => ({
+      .then(r=>r.json())
+      .then(data=>{
+        gamesData = (data.data||data).map(g=>({
           ...g,
-          genres_names: g.genres?.map(x => x.name) || []
+          genres_names: g.genres?.map(x=>x.name)||[]
         }));
         applyFilters();
       })
-      .catch(err => console.error('Games fetch error:', err));
+      .catch(err=>console.error('Games fetch failed:',err));
     })();
-  
-    // ————————————————————————————————————————————————
-    // 7) Event listeners
-    // ————————————————————————————————————————————————
+
+    // 8) Event listeners
     searchBtn.addEventListener('click', applyFilters);
-    searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyFilters(); });
+    searchInput.addEventListener('keydown', e => e.key==='Enter' && applyFilters());
     sortSelect.addEventListener('change', applyFilters);
     filterSelect.addEventListener('change', applyFilters);
   </script>
-  
 </body>
 </html>
