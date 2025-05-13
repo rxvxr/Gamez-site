@@ -63,25 +63,34 @@
   </div>
 
   <script>
-    const PROXY_BASE = 'https://gamez-cors-proxy.onrender.com/https://api.igdb.com/v4';
-    const IGDB_GAMES_URL = `${PROXY_BASE}/games`;
+    // ————————————————————————————————————————————————
+    // 1) Point at your deployed CORS proxy + IGDB base
+    // ————————————————————————————————————————————————
+    const PROXY_BASE          = 'https://cors-anywhere-ikzo.onrender.com/https://api.igdb.com/v4';
+    const IGDB_GAMES_URL      = `${PROXY_BASE}/games`;
     const IGDB_CHARACTERS_URL = `${PROXY_BASE}/characters`;
-    const PLATFORM_ID = 130;
-    const CLIENT_ID = '723piadscdye95ondoeeee21nn8hpp';
-    const AUTH_TOKEN = 'Bearer 6zc75l3hdu9fnyqzs3xlsfm7udv2t4';
-
-    const searchInput = document.getElementById('searchInput');
-    const searchBtn = document.getElementById('searchBtn');
-    const sortSelect = document.getElementById('sortSelect');
-    const filterSelect = document.getElementById('filterSelect');
-    const gamesContainer = document.getElementById('gamesContainer');
-    const modal = document.getElementById('modal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalDesc = document.getElementById('modalDesc');
-    const modalCharacters = document.getElementById('modalCharacters');
-
+    const PLATFORM_ID         = 6;                  // change to 130 for Switch, 5 for Wii
+    const CLIENT_ID           = '723piadscdye95ondoeeee21nn8hpp';
+    const AUTH_TOKEN          = 'Bearer 6zc75l3hdu9fnyqzs3xlsfm7udv2t4';
+  
+    // ————————————————————————————————————————————————
+    // 2) DOM references
+    // ————————————————————————————————————————————————
+    const searchInput   = document.getElementById('searchInput');
+    const searchBtn     = document.getElementById('searchBtn');
+    const sortSelect    = document.getElementById('sortSelect');
+    const filterSelect  = document.getElementById('filterSelect');
+    const gamesContainer= document.getElementById('gamesContainer');
+    const modal         = document.getElementById('modal');
+    const modalTitle    = document.getElementById('modalTitle');
+    const modalDesc     = document.getElementById('modalDesc');
+    const modalChars    = document.getElementById('modalCharacters');
+  
     let gamesData = [];
-
+  
+    // ————————————————————————————————————————————————
+    // 3) Render game cards
+    // ————————————————————————————————————————————————
     function renderGames(games) {
       gamesContainer.innerHTML = '';
       games.forEach(game => {
@@ -96,56 +105,107 @@
             <img src="${coverUrl}" alt="${game.name}" class="max-h-full max-w-full object-contain" />
           </div>
           <p class="text-white text-sm">${game.summary || 'No description available.'}</p>
-          <button onclick="showMore(${game.id})" class="bg-yellow-600 text-white px-4 py-2 rounded mt-2">Learn More</button>
+          <button onclick="showMore(${game.id})" class="bg-yellow-600 text-white px-4 py-2 rounded mt-2">
+            Learn More
+          </button>
         `;
         gamesContainer.appendChild(card);
       });
     }
-
+  
+    // ————————————————————————————————————————————————
+    // 4) Filter, sort & search
+    // ————————————————————————————————————————————————
     function applyFilters() {
-      let filtered = [...gamesData];
+      let list = [...gamesData];
       const genre = filterSelect.value;
-      if (genre) filtered = filtered.filter(g => g.genres_names.includes(genre));
-      const query = searchInput.value.trim().toLowerCase();
-      if (query) filtered = filtered.filter(g => g.name.toLowerCase().includes(query));
+      if (genre) {
+        list = list.filter(g => g.genres_names.includes(genre));
+      }
+      const q = searchInput.value.trim().toLowerCase();
+      if (q) {
+        list = list.filter(g => g.name.toLowerCase().includes(q));
+      }
       const sortBy = sortSelect.value;
-      filtered.sort((a, b) =>
-        sortBy === 'name' ? a.name.localeCompare(b.name) : b.first_release_date - a.first_release_date
-      );
-      renderGames(filtered);
+      list.sort((a,b) => {
+        if (sortBy === 'name') return a.name.localeCompare(b.name);
+        return b.first_release_date - a.first_release_date;
+      });
+      renderGames(list);
     }
-
+  
+    // ————————————————————————————————————————————————
+    // 5) “Learn More” modal fetch
+    // ————————————————————————————————————————————————
     function showMore(gameId) {
-      fetch(IGDB_CHARACTERS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'Client-ID': CLIENT_ID, 'Authorization': AUTH_TOKEN }, body: `fields name,description,games; where games = ${gameId};` })
-      .then(res => res.json()).then(resp => {
-        const chars = resp.data || resp;
-        const game = gamesData.find(g => g.id === gameId) || {};
-        modalTitle.textContent = game.name;
-        modalDesc.textContent = game.summary || 'No further description.';
-        modalCharacters.innerHTML = '';
-        if (chars.length) chars.forEach(c => modalCharacters.innerHTML += `<li><strong>${c.name}</strong>: ${c.description}</li>`);
-        else modalCharacters.innerHTML = '<li>No characters available.</li>';
+      fetch(IGDB_CHARACTERS_URL, {
+        method: 'POST',
+        headers: {
+          'Accept':       'application/json',
+          'Content-Type': 'text/plain',
+          'Client-ID':    CLIENT_ID,
+          'Authorization': AUTH_TOKEN
+        },
+        body: `fields name,description,games; where games = ${gameId};`
+      })
+      .then(r => r.json())
+      .then(chars => {
+        const g = gamesData.find(x => x.id === gameId) || {};
+        modalTitle.textContent = g.name;
+        modalDesc.textContent  = g.summary || 'No further description.';
+        modalChars.innerHTML   = '';
+        if (Array.isArray(chars) && chars.length) {
+          chars.forEach(c => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${c.name}</strong>: ${c.description || 'No description.'}`;
+            modalChars.appendChild(li);
+          });
+        } else {
+          modalChars.innerHTML = '<li>No characters available.</li>';
+        }
         modal.classList.remove('hidden');
-      }).catch(console.error);
+      })
+      .catch(err => console.error('Character fetch error:', err));
     }
-
+  
+    // ————————————————————————————————————————————————
+    // 6) Initial games fetch
+    // ————————————————————————————————————————————————
     (function fetchGames() {
-      const query = `
-        fields id,name,summary,cover.image_id,first_release_date,genres.name,age_ratings.rating;
-        where platforms = (${PLATFORM_ID}) & age_ratings.rating != (6,7);
+      const q = `
+        fields id,name,summary,cover.image_id,first_release_date,genres.name;
+        where platforms = (${PLATFORM_ID});
         limit 50;
       `;
-      fetch(IGDB_GAMES_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'Client-ID': CLIENT_ID, 'Authorization': AUTH_TOKEN }, body: query })
-      .then(res => res.json()).then(resp => {
-        gamesData = (resp.data || resp).map(g => ({ ...g, genres_names: g.genres?.map(x => x.name) || [] }));
+      fetch(IGDB_GAMES_URL, {
+        method: 'POST',
+        headers: {
+          'Accept':       'application/json',
+          'Content-Type': 'text/plain',
+          'Client-ID':    CLIENT_ID,
+          'Authorization': AUTH_TOKEN
+        },
+        body: q
+      })
+      .then(r => r.json())
+      .then(data => {
+        gamesData = (data.data || data).map(g => ({
+          ...g,
+          genres_names: g.genres?.map(x => x.name) || []
+        }));
         applyFilters();
-      }).catch(console.error);
+      })
+      .catch(err => console.error('Games fetch error:', err));
     })();
-
+  
+    // ————————————————————————————————————————————————
+    // 7) Event listeners
+    // ————————————————————————————————————————————————
     searchBtn.addEventListener('click', applyFilters);
     searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyFilters(); });
     sortSelect.addEventListener('change', applyFilters);
     filterSelect.addEventListener('change', applyFilters);
   </script>
+  
 </body>
 </html>
