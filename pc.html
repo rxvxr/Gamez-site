@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Find info and details on PC games." />
+  <meta name="description" content="Find info and details on PC games, filtered for all ages." />
   <title>Gamez – PC Games</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
@@ -15,8 +15,8 @@
     }
   </style>
 </head>
-
 <body class="min-h-screen">
+
   <!-- Navbar -->
   <nav class="bg-[#a62985] flex flex-wrap items-center justify-between px-4 py-3">
     <div class="flex items-center space-x-2">
@@ -35,10 +35,7 @@
           placeholder="Search games..."
           class="bg-[#65114d] placeholder-white text-white pl-3 pr-10 py-2 rounded focus:outline-none"
         />
-        <button
-          id="searchBtn"
-          class="absolute right-2 top-2 text-white focus:outline-none"
-        >🔍</button>
+        <button id="searchBtn" class="absolute right-2 top-2 text-white focus:outline-none">🔍</button>
       </div>
     </div>
   </nav>
@@ -53,7 +50,7 @@
       <select id="filterSelect" class="bg-[#a62985] text-white px-4 py-2 rounded">
         <option value="">All Genres</option>
         <option value="Shooter">Shooter</option>
-        <option value="Platform">Platformer</option>
+        <option value="Platformer">Platformer</option>
       </select>
     </div>
     <h2 class="text-white text-lg font-semibold text-center flex-grow">PC GAMES</h2>
@@ -75,19 +72,19 @@
     </div>
   </div>
 
-  <!-- Script: fetch + render -->
+  <!-- Script: fetch + render + filters -->
   <script>
-    // ─── 1) YOUR PUBLIC CORS PROXY ─────────────────────────────────────────
-    const PROXY_BASE = 'https://cors-anywhere-ikzo.onrender.com';
-
-    // ─── 2) IGDB / PLATFORM CONSTANTS ──────────────────────────────────────
+    // 1) Public CORS proxy + IGDB base
+    const PROXY_BASE          = 'https://cors-anywhere-ikzo.onrender.com/https://api.igdb.com/v4';
     const IGDB_GAMES_URL      = `${PROXY_BASE}/games`;
     const IGDB_CHARACTERS_URL = `${PROXY_BASE}/characters`;
+
+    // 2) Platform & Auth
     const PLATFORM_ID = 6; // PC
     const CLIENT_ID   = '723piadscdye95ondoeeee21nn8hpp';
     const AUTH_TOKEN  = 'Bearer 6zc75l3hdu9fnyqzs3xlsfm7udv2t4';
 
-    // ─── 3) DOM ELEMENT REFERENCES ─────────────────────────────────────────
+    // 3) DOM refs
     const searchInput    = document.getElementById('searchInput');
     const searchBtn      = document.getElementById('searchBtn');
     const sortSelect     = document.getElementById('sortSelect');
@@ -100,7 +97,7 @@
 
     let gamesData = [];
 
-    // ─── 4) RENDER GAME CARDS ───────────────────────────────────────────────
+    // 4) Render game cards
     function renderGames(list) {
       gamesContainer.innerHTML = '';
       list.forEach(game => {
@@ -115,25 +112,26 @@
             <img src="${coverUrl}" alt="${game.name}" class="max-h-full max-w-full object-contain"/>
           </div>
           <p class="text-white text-sm">${game.summary || 'No description.'}</p>
-          <button onclick="showMore(${game.id})" class="bg-yellow-600 text-white px-4 py-2 rounded">
-            Learn More
-          </button>
+          <button onclick="showMore(${game.id})" class="bg-yellow-600 text-white px-4 py-2 rounded">Learn More</button>
         `;
         gamesContainer.appendChild(card);
       });
     }
 
-    // ─── 5) FILTER, SORT & SEARCH ───────────────────────────────────────────
+    // 5) Filter, sort, search, and NSFW removal
     function applyFilters() {
       let filtered = [...gamesData];
 
-      // Search
-      const q = searchInput.value.trim().toLowerCase();
-      if (q) filtered = filtered.filter(g => g.name.toLowerCase().includes(q));
+      // Remove Erotic-themed games
+      filtered = filtered.filter(g => !g.themes_names.includes('Erotic'));
 
       // Genre filter
       const genre = filterSelect.value;
       if (genre) filtered = filtered.filter(g => g.genres_names.includes(genre));
+
+      // Search filter
+      const q = searchInput.value.trim().toLowerCase();
+      if (q) filtered = filtered.filter(g => g.name.toLowerCase().includes(q));
 
       // Sort
       if (sortSelect.value === 'name') {
@@ -145,14 +143,14 @@
       renderGames(filtered);
     }
 
-    // ─── 6) SHOW MORE (CHARACTERS) ──────────────────────────────────────────
+    // 6) Show More (Fetch characters)
     function showMore(id) {
       fetch(IGDB_CHARACTERS_URL, {
         method: 'POST',
         headers: {
-          'Accept':       'application/json',
-          'Content-Type': 'text/plain',
-          'Client-ID':    CLIENT_ID,
+          'Accept':        'application/json',
+          'Content-Type':  'text/plain',
+          'Client-ID':     CLIENT_ID,
           'Authorization': AUTH_TOKEN
         },
         body: `fields name,description,games; where games = ${id};`
@@ -163,7 +161,6 @@
         modalTitle.textContent = game.name;
         modalDesc.textContent  = game.summary || 'No further description.';
         modalChars.innerHTML   = '';
-
         if (chars.length) {
           chars.forEach(c => {
             const li = document.createElement('li');
@@ -173,25 +170,24 @@
         } else {
           modalChars.innerHTML = '<li>No characters available.</li>';
         }
-
         modal.classList.remove('hidden');
       })
       .catch(console.error);
     }
 
-    // ─── 7) INITIAL GAME FETCH ──────────────────────────────────────────────
-    (function loadGames() {
+    // 7) Initial fetch of games
+    (function fetchGames() {
       fetch(IGDB_GAMES_URL, {
         method: 'POST',
         headers: {
-          'Accept':       'application/json',
-          'Content-Type': 'text/plain',
-          'Client-ID':    CLIENT_ID,
+          'Accept':        'application/json',
+          'Content-Type':  'text/plain',
+          'Client-ID':     CLIENT_ID,
           'Authorization': AUTH_TOKEN
         },
         body: `
-          fields id,name,summary,cover.image_id,first_release_date,genres.name;
-          where platforms = (${PLATFORM_ID});
+          fields id,name,summary,cover.image_id,first_release_date,genres.name,themes.name;
+          where platforms = (${PLATFORM_ID}) & themes != (5);
           limit 50;
         `
       })
@@ -199,18 +195,20 @@
       .then(data => {
         gamesData = (data.data || data).map(g => ({
           ...g,
-          genres_names: g.genres?.map(x => x.name) || []
+          genres_names: g.genres?.map(x => x.name) || [],
+          themes_names: g.themes?.map(x => x.name) || []
         }));
         applyFilters();
       })
-      .catch(err => console.error('Games fetch failed:', err));
+      .catch(err => console.error('Games fetch error:', err));
     })();
 
-    // ─── 8) EVENT LISTENERS ─────────────────────────────────────────────────
+    // 8) Event listeners
     searchBtn.addEventListener('click', applyFilters);
-    searchInput.addEventListener('keydown', e => e.key === 'Enter' && applyFilters());
+    searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyFilters(); });
     sortSelect.addEventListener('change', applyFilters);
     filterSelect.addEventListener('change', applyFilters);
   </script>
+
 </body>
 </html>
