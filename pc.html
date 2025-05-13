@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Find info and details on PC games, filtered for all ages." />
+  <title>Gamez - PC Games</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; background-color: #0d080d; color: white; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <!-- Navbar -->
+  <nav class="bg-[#a62985] flex flex-wrap items-center justify-between px-4 py-3">
+    <div class="flex items-center space-x-2">
+      <img src="logo.png" alt="Logo" class="w-12 h-12 rounded-full" />
+      <a href="pc.html" class="bg-[#65114d] px-4 py-2 rounded text-white">PC</a>
+      <a href="switch.html" class="bg-[#65114d] px-4 py-2 rounded text-white">Switch</a>
+      <a href="wii.html" class="bg-[#65114d] px-4 py-2 rounded text-white">Wii</a>
+    </div>
+    <div class="flex items-center space-x-2">
+      <a href="index.html" class="bg-[#65114d] px-4 py-2 rounded text-white">Home</a>
+      <a href="#" class="bg-[#65114d] px-4 py-2 rounded text-white">Account</a>
+      <div class="relative">
+        <input id="searchInput" type="text" placeholder="Search games..." class="bg-[#65114d] placeholder-white text-white pl-3 pr-10 py-2 rounded focus:outline-none" />
+        <button id="searchBtn" class="absolute right-0 top-0 mt-2 mr-3 text-white">🔍</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Filter Bar -->
+  <div class="bg-[#65114d] w-full flex flex-wrap items-center justify-between px-4 py-3 mt-2 rounded">
+    <div class="flex space-x-2">
+      <select id="sortSelect" class="bg-[#a62985] text-white px-4 py-2 rounded">
+        <option value="name">Sort by Name</option>
+        <option value="first_release_date">Sort by Date</option>
+      </select>
+      <select id="filterSelect" class="bg-[#a62985] text-white px-4 py-2 rounded">
+        <option value="">All Genres</option>
+        <option value="Shooter">Shooter</option>
+        <option value="Platformer">Platformer</option>
+      </select>
+    </div>
+    <h2 class="text-white text-lg font-semibold">PC GAMES</h2>
+  </div>
+
+  <!-- Game Cards -->
+  <main id="gamesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4"></main>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+    <div class="bg-[#a62985] rounded-lg p-6 w-11/12 max-w-2xl text-white relative">
+      <button onclick="modal.classList.add('hidden')" class="absolute top-2 right-4 text-white text-xl">✖</button>
+      <h3 id="modalTitle" class="text-2xl font-bold mb-2"></h3>
+      <p id="modalDesc" class="mb-4 text-sm"></p>
+      <div>
+        <h4 class="text-lg font-semibold mb-2">Characters</h4>
+        <ul id="modalCharacters" class="space-y-2 text-sm"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PROXY_BASE = 'http://localhost:8080/https://api.igdb.com/v4';
+    const IGDB_GAMES_URL = `${PROXY_BASE}/games`;
+    const IGDB_CHARACTERS_URL = `${PROXY_BASE}/characters`;
+    const PLATFORM_ID = 6;
+    const CLIENT_ID = '723piadscdye95ondoeeee21nn8hpp';
+    const AUTH_TOKEN = 'Bearer 6zc75l3hdu9fnyqzs3xlsfm7udv2t4';
+
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const sortSelect = document.getElementById('sortSelect');
+    const filterSelect = document.getElementById('filterSelect');
+    const gamesContainer = document.getElementById('gamesContainer');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDesc = document.getElementById('modalDesc');
+    const modalCharacters = document.getElementById('modalCharacters');
+
+    let gamesData = [];
+
+    function renderGames(games) {
+      gamesContainer.innerHTML = '';
+      games.forEach(game => {
+        const coverUrl = game.cover
+          ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`
+          : 'https://via.placeholder.com/300';
+        const card = document.createElement('div');
+        card.className = 'bg-[#a62985] rounded-xl p-4 flex flex-col items-center text-center space-y-2';
+        card.innerHTML = `
+          <h3 class="text-white font-bold text-lg">${game.name}</h3>
+          <div class="w-full h-56 flex items-center justify-center bg-black">
+            <img src="${coverUrl}" alt="${game.name}" class="max-h-full max-w-full object-contain" />
+          </div>
+          <p class="text-white text-sm">${game.summary || 'No description available.'}</p>
+          <button onclick="showMore(${game.id})" class="bg-yellow-600 text-white px-4 py-2 rounded mt-2">Learn More</button>
+        `;
+        gamesContainer.appendChild(card);
+      });
+    }
+
+    function applyFilters() {
+      let filtered = [...gamesData];
+      const genre = filterSelect.value;
+      if (genre) filtered = filtered.filter(g => g.genres_names.includes(genre));
+      const query = searchInput.value.trim().toLowerCase();
+      if (query) filtered = filtered.filter(g => g.name.toLowerCase().includes(query));
+      const sortBy = sortSelect.value;
+      filtered.sort((a, b) =>
+        sortBy === 'name' ? a.name.localeCompare(b.name) : b.first_release_date - a.first_release_date
+      );
+      renderGames(filtered);
+    }
+
+    function showMore(gameId) {
+      fetch(IGDB_CHARACTERS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'Client-ID': CLIENT_ID, 'Authorization': AUTH_TOKEN }, body: `fields name,description,games; where games = ${gameId};` })
+      .then(res => res.json()).then(resp => {
+        const chars = resp.data || resp;
+        const game = gamesData.find(g => g.id === gameId) || {};
+        modalTitle.textContent = game.name;
+        modalDesc.textContent = game.summary || 'No further description.';
+        modalCharacters.innerHTML = '';
+        if (chars.length) chars.forEach(c => modalCharacters.innerHTML += `<li><strong>${c.name}</strong>: ${c.description}</li>`);
+        else modalCharacters.innerHTML = '<li>No characters available.</li>';
+        modal.classList.remove('hidden');
+      }).catch(console.error);
+    }
+
+    (function fetchGames() {
+      const query = `fields id,name,summary,cover.image_id,first_release_date,genres.name,age_ratings.rating; where platforms = (${PLATFORM_ID}) & age_ratings.rating != (6, 7); limit 50;`;
+      fetch(IGDB_GAMES_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain', 'Client-ID': CLIENT_ID, 'Authorization': AUTH_TOKEN }, body: query })
+      .then(res => res.json()).then(resp => {
+        gamesData = (resp.data || resp).map(g => ({ ...g, genres_names: g.genres?.map(x => x.name) || [] }));
+        applyFilters();
+      }).catch(console.error);
+    })();
+
+    searchBtn.addEventListener('click', applyFilters);
+    searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyFilters(); });
+    sortSelect.addEventListener('change', applyFilters);
+    filterSelect.addEventListener('change', applyFilters);
+  </script>
+</body>
+</html>

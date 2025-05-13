@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Everything you need to know about games." />
+  <title>Gamez</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#0d080d] text-white">
+  <!-- Navbar (unchanged) -->
+  <nav class="bg-[#a62985] flex flex-wrap items-center justify-between px-4 py-3">
+    <div class="flex items-center space-x-2">
+      <img src="logo.png" alt="Logo" class="w-12 h-12 rounded-full" />
+      <a href="pc.html" class="bg-[#65114d] px-4 py-2 rounded text-white">PC</a>
+      <a href="switch.html" class="bg-[#65114d] px-4 py-2 rounded text-white">Switch</a>
+      <a href="wii.html" class="bg-[#65114d] px-4 py-2 rounded text-white">Wii</a>
+    </div>
+    <div class="flex items-center space-x-2">
+      <a href="index.html" class="bg-[#65114d] px-4 py-2 rounded text-white">Home</a>
+      <a href="#" class="bg-[#65114d] px-4 py-2 rounded text-white">Account</a>
+      <div class="relative">
+        <input type="text" placeholder="Search..." class="bg-[#65114d] placeholder-white text-white pl-3 pr-10 py-2 rounded focus:outline-none" />
+        <span class="absolute right-2 top-2 text-white">🔍</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Landing Content -->
+  <main class="flex flex-col items-center justify-center h-[calc(100vh-72px)] text-center px-4">
+    <img src="logo.png" alt="Gamez Logo" class="w-100 h-60 mb-6" />
+    <p class="text-xl md:text-2xl lg:text-3xl">Everything you need to know about games</p>
+  </main>
+</body>
+</html>
